@@ -337,6 +337,7 @@ loadClassificationData()
 /* 样式部分保持不变 */
 .classification-container {
   padding: 20px;
+  opacity: 0.8;
 }
 
 .tree-table {

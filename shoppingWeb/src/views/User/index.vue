@@ -211,7 +211,7 @@ fetchUserList();
 </script>
 
 <template>
-  <div>
+  <div class="box">
     <el-button type="primary" @click="addShow">添加用户</el-button>
     <div>
       <!-- 弹框表单 -->
@@ -260,6 +260,7 @@ fetchUserList();
         </template>
       </el-dialog>
     </div>
+    <br>
     <div>
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="searchForm" class="demo-form-inline">
@@ -308,7 +309,7 @@ fetchUserList();
         </el-table-column>
       </el-table>
     </div>
-
+<br>
     <div>
       <el-pagination
         v-model:current-page="page"
@@ -327,6 +328,9 @@ fetchUserList();
 </template>
 
 <style scoped>
+.box{
+  opacity: 0.8;
+}
 .avatar {
   width: 178px;
   height: 178px;

@@ -41,9 +41,9 @@ const logout = () => {
       <el-header class="header">
         <span class="title">智能仓储系统</span>
         <span class="right_tool">
-          <a href="javascript:void(0)" @click="logout">
+          <h2 href="javascript:void(0)" @click="logout">
             <el-icon><SwitchButton /></el-icon> 退出登录【{{ loginName }}】
-          </a>
+          </h2>
         </span>
       </el-header>
       <el-container>
@@ -92,8 +92,8 @@ const logout = () => {
   line-height: 60px;
 }
 
-a {
-  color: rgb(14, 156, 238);
+h2{
+  color: rgb(241, 101, 20);
   text-decoration: none;
 }
 
@@ -120,7 +120,7 @@ a {
 }
 
 .el-aside {
-  /* background: url("/岸宝.png") no-repeat center center; */
+  background: url("/岸宝.png") no-repeat center center;
   background-size: cover;
   min-height: 900px;
   position: relative; /* 为伪元素定位做准备 */
@@ -146,7 +146,7 @@ a {
 }
 
 .el-main {
-  /* background: url("./瑞希.png") no-repeat center center; */
+  background: url("./瑞希.png") no-repeat center center;
   background-size: cover;
 }
 </style>

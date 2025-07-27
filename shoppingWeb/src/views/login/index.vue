@@ -58,7 +58,7 @@ const onSubmitPinia = async () => {
 #container {
   padding: 10%;
   height: 410px;
-  /* background-image: url(""); */
+  background-image: url("/public/login.jpg");
   background-repeat: no-repeat;
   background-size: cover;
 }
@@ -85,4 +85,5 @@ const onSubmitPinia = async () => {
   margin-top: 30px;
   width: 120px;
 }
+
 </style>

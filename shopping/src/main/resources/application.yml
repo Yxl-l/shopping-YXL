@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: shopping
+  #  mysql连接配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.100.168:3306/shopping
+    username: root
+    password: heima123
+
+
+#配置数据库连接信息  linux
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://mysql:3306/tlias
+#    #docker容器名和容器端口
+#    username: root
+#    password: 123
+  servlet:
+    multipart:
+      max-file-size: 10MB #单个文件最大大小限制10MB
+      max-request-size: 100MB #单个请求最大大小限制100MB
+
+
+
+#mybatis:
+#  configuration:
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    map-underscore-to-camel-case: true
+#pagehelper:
+#  reasonable: true
+#  helper-dialect: mysql
+mybatis-plus:
+  mapper-locations: classpath*:mapper/*.xml
+  # 设置别名包扫描路径，通过该属性可以给包中的类注册别名
+  type-aliases-package: com.yxl.pojo
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 方法三：开启小驼峰命名法
+    map-underscore-to-camel-case: true
+
+
+#spring事务管理日志
+logging:
+  level:
+    org.springframework.jdbc.support.JdbcTransactionManager: debug
+aliyun:
+  oss:
+    endpoint: https://oss-cn-beijing.aliyuncs.com
+    bucketName: yxl-hutaozi
+    region: cn-beijing

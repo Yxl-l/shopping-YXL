@@ -57,7 +57,7 @@ const onSubmitPinia = async () => {
 <style scoped>
 #container {
   padding: 10%;
-  height: 410px;
+  height: 430px;
   background-image: url("/public/login.jpg");
   background-repeat: no-repeat;
   background-size: cover;

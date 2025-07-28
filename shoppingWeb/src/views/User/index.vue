@@ -1,11 +1,14 @@
+<!-- index.vue (修改后的部分) -->
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import type { ComponentSize } from "element-plus";
 import { queryPages, addUser, deleteUser, updateUser, queryUserById } from "@/api/user";
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus';
 import type { FormInstance } from 'element-plus';
 import { ElMessageBox } from 'element-plus';
+import UserList from "./userList.vue";
+import Window from "./window.vue"; // 引入 window 组件
 
 // 定义用户数据结构
 interface User {
@@ -17,55 +20,20 @@ interface User {
   showPassword?: boolean;
 }
 
-// 初始化数据时添加 showPassword 属性
-const tableData = reactive<User[]>([]);
 // 搜索数据
 const searchForm = reactive({
   name: "",
 });
+
 //清空搜索表单
 const resetSearchForm = () => {
   searchForm.name = "";
   fetchUserList();
 };
+
 // 获取用户列表并处理分页逻辑
 const fetchUserList = async () => {
-  const result = await queryPages(searchForm.name, page.value, pageSize.value);
-
-  // 清空原数据并添加新数据
-  tableData.splice(0);
-  // 使用 map 方法遍历返回的数据，为每条记录添加 showPassword 属性，默认设为 false
-  tableData.push(
-    ...result.data.rows.map((item: any) => ({
-      ...item,
-      showPassword: false,
-    }))
-  );
-  total.value = result.data.total;
-};
-
-// 切换密码显示状态的方法
-const togglePassword = (row: User) => {
-  row.showPassword = !row.showPassword;
-};
-
-// 分页相关
-const total = ref(0);
-const page = ref(1);
-const pageSize = ref(5);
-const size: ComponentSize = "default";
-const disabled = false;
-const background = true;
-
-const handleSizeChange = (val: number) => {
-  pageSize.value = val;
-  page.value = 1;
-  fetchUserList();
-};
-
-const handleCurrentChange = (val: number) => {
-  page.value = val;
-  fetchUserList();
+  userListRef.value?.fetchUserList();
 };
 
 // 创建变量，用于控制弹框是否显示
@@ -81,8 +49,10 @@ const empForm = reactive({
   passWord: "",
 });
 
-// 文件输入引用
-const fileInputRef = ref<HTMLInputElement | null>(null);
+// userList组件引用
+const userListRef = ref<InstanceType<typeof UserList> | null>(null);
+// window组件引用
+const windowRef = ref<InstanceType<typeof Window> | null>(null);
 
 // 处理文件选择，保存本地路径
 const handleFileChange = (event: Event) => {
@@ -106,9 +76,7 @@ const addShow = () => {
   tips.value = "新增用户";
   
   // 清空文件输入框
-  if (fileInputRef.value) {
-    fileInputRef.value.value = '';
-  }
+  windowRef.value?.clearFileInput();
 };
 
 //点编辑
@@ -119,40 +87,36 @@ const queryEmpById = async (id: number) => {
   Object.assign(empForm, res.data);
   
   // 清空文件输入框
-  if (fileInputRef.value) {
-    fileInputRef.value.value = '';
+  windowRef.value?.clearFileInput();
+};
+
+// 提交表单
+const handleSubmit = async (data: any) => {
+  // 校验通过
+  let res;
+  if (data.id) {
+    //存在ID, 修改
+    res = await updateUser(data);
+  } else {
+    //不存在ID, 新增
+    res = await addUser(data);
+  }
+  // 判断结果
+  if (res.code) {
+    //操作成功，则刷新界面（重新获取员工列表），关闭弹框
+    dialogShow.value = false;
+    // 刷新界面
+    fetchUserList();
+    // 提示
+    ElMessage.success("操作成功！");
+  } else {
+    ElMessage.error("操作失败！");
   }
 };
 
-// 关联表单对象
-const ruleFormRef = ref<FormInstance | null>(null);
-// 提交表单校验
-
-const addEmp = async () => {
-  ruleFormRef.value!.validate(async (valid: boolean) => {
-    if (valid) {
-      //校验通过
-      let res;
-      if (empForm.id) {
-        //存在ID, 修改
-        res = await updateUser(empForm);
-      } else {
-        //不存在ID, 新增
-        res = await addUser(empForm);
-      }
-      // 判断结果
-      if (res.code) {
-        //操作成功，则刷新界面（重新获取员工列表），关闭弹框
-        dialogShow.value = false;
-        // 刷新界面
-        fetchUserList();
-        // 提示
-        ElMessage.success("操作成功！");
-      } else {
-        ElMessage.error("操作失败！");
-      }
-    }
-  });
+// 取消表单操作
+const handleCancel = () => {
+  dialogShow.value = false;
 };
 
 // 定义校验规则（光标离开后的时间校验）
@@ -187,79 +151,33 @@ const rules = ref({
   ],
 });
 
-//删除方法
-const deleteByIds = async (id: number) => {
-  //弹出一个确认框, 如果确认, 就删除;
-  ElMessageBox.confirm("确定删除选中用户吗?", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
-  }).then(async () => {
-    // 删除用户
-    const res = await deleteUser(id);
-    if (res.code) {
-      ElMessage.success(`删除成功`);
-      fetchUserList(); //刷新界面
-    } else {
-      ElMessage.error(res.msg);
-    }
-  });
+// 处理编辑用户事件
+const handleEditUser = (id: number) => {
+  queryEmpById(id);
 };
 
 // 初始化加载
-fetchUserList();
+onMounted(() => {
+  fetchUserList();
+});
 </script>
 
 <template>
   <div class="box">
     <el-button type="primary" @click="addShow">添加用户</el-button>
-    <div>
-      <!-- 弹框表单 -->
-      <el-dialog
-        v-model="dialogShow"
-        :title="tips"
-        width="800"
-      >
-        <el-form :model="empForm" label-width="auto" ref="ruleFormRef" :rules="rules">
-          <el-row :gutter="10">
-            <el-col :span="12">
-              <el-form-item label="用户名" prop="userName">
-                <el-input v-model="empForm.userName" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="姓名" prop="name">
-                <el-input v-model="empForm.name" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="24">
-              <el-form-item label="用户密码" prop="passWord">
-                <el-input v-model="empForm.passWord" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="24">
-              <el-form-item label="图像">
-                <input 
-                  ref="fileInputRef"
-                  type="file" 
-                  @change="handleFileChange" 
-                  accept="image/*" 
-                />
-                <div v-if="empForm.image">
-                  <img :src="empForm.image" class="avatar" />
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button @click="dialogShow = false">取消</el-button>
-            <el-button type="primary" @click="addEmp">提交</el-button>
-          </div>
-        </template>
-      </el-dialog>
-    </div>
+    
+    <!-- 使用 window 组件 -->
+    <Window
+      ref="windowRef"
+      v-model="dialogShow"
+      :title="tips"
+      :form-data="empForm"
+      :rules="rules"
+      @submit="handleSubmit"
+      @cancel="handleCancel"
+      @file-change="handleFileChange"
+    />
+    
     <br>
     <div>
       <!-- 搜索表单 -->
@@ -274,67 +192,18 @@ fetchUserList();
         </el-form-item>
       </el-form>
     </div>
-    <div>
-      <el-table :data="tableData" style="width: 100%">
-        <el-table-column fixed type="index" label="序号" width="150" />
-        <el-table-column prop="name" label="姓名" width="120" />
-        <el-table-column prop="id" label="主键id" width="120" />
-        <el-table-column prop="userName" label="账户名" width="150" />
-        <!-- 修改密码列 -->
-        <el-table-column prop="passWord" label="账户密码" width="200">
-          <template #default="scope">
-            <span>{{ scope.row.showPassword ? scope.row.passWord : "****" }}</span>
-            <el-button
-              link
-              type="primary"
-              size="small"
-              @click="togglePassword(scope.row)"
-              style="margin-left: 10px"
-            >
-              {{ scope.row.showPassword ? "隐藏" : "显示" }}
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column label="头像" width="120">
-          <template #default="scope">
-            <img :src="scope.row.image" style="width: 100px; height: 100px" />
-          </template>
-        </el-table-column>
-
-        <el-table-column fixed="right" label="操作" min-width="120">
-          <template #default="scope">
-            <el-button type="danger" @click="deleteByIds(scope.row.id)"> 删除 </el-button>
-            <el-button type="primary" @click="queryEmpById(scope.row.id)">编辑</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-<br>
-    <div>
-      <el-pagination
-        v-model:current-page="page"
-        v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 30, 40]"
-        :size="size"
-        :disabled="disabled"
-        :background="background"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+    <!-- 使用 userList 组件 -->
+    <UserList 
+      ref="userListRef"
+      :search-name="searchForm.name"
+      @edit-user="handleEditUser"
+      @update-user-list="fetchUserList"
+    />
   </div>
 </template>
 
 <style scoped>
 .box{
   opacity: 0.8;
-}
-.avatar {
-  width: 178px;
-  height: 178px;
-  display: block;
-  margin-top: 10px;
 }
 </style>
